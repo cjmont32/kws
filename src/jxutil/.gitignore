@@ -1,0 +1,7 @@
+jx_tests
+*.swp
+bin/
+rel/
+
+# OSX
+.DS_Store

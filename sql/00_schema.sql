@@ -1,0 +1,23 @@
+CREATE TABLE questions
+(
+    qid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    question VARCHAR(1024)
+);
+
+CREATE TABLE answers
+(
+    aid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    qid INTEGER NOT NULL,
+    answer VARCHAR(1024),
+    FOREIGN KEY (qid) REFERENCES questions(qid)
+);
+
+CREATE TABLE keywords
+(
+    wid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    qid INTEGER NOT NULL,
+    keyword VARCHAR(128),
+    FOREIGN KEY (qid) REFERENCES questions(qid)
+);
+
+CREATE INDEX kw_index ON keywords (keyword);
