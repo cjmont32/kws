@@ -7,6 +7,7 @@
 #include <sqlite3.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include "db.h"
 
@@ -75,6 +76,54 @@ int db_step(sqlite3_stmt *stmt);
 bool db_reset(sqlite3_stmt *stmt);
 bool db_finalize(sqlite3_stmt *stmt);
 
+void str_to_lower(char *str)
+{
+    while (*str) {
+        *str = tolower(*str);
+        str++;
+    }
+}
+
+void terminate(char *str)
+{
+    while (*str) {
+        if (*str == '?') {
+            *str = '\0';
+            break;
+        }
+
+        str++;
+    }
+}
+
+char *get_sql_with_n_params(const char *sql_in, int n)
+{
+    int count;
+
+    char *sql_out, *p_str, *ptr;
+
+    if (n < 1)
+        return NULL;
+
+    p_str = ptr = alloca(n * 2);
+
+    do {
+        *(ptr++) = '?';
+        *(ptr++) = (n > 1) ? ',' : '\0';
+    } while (--n > 0);
+
+    count = snprintf(NULL, 0, sql_in, p_str);
+
+    sql_out = malloc(count + 1);
+
+    if (sql_out == NULL)
+        return NULL;
+
+    sprintf(sql_out, sql_in, p_str);
+
+    return sql_out;
+}
+
 int db_get_keyword_count(enum db_action act, const char *param)
 {
     int r;
@@ -136,6 +185,10 @@ jx_value *db_get_kw_list(struct kws_request *request)
     kw = strtok(query, " ");
 
     do {
+        str_to_lower(kw);
+
+        terminate(kw);
+
         if (jxd_has_key(kw_set, kw))
             continue;
 
@@ -154,34 +207,6 @@ jx_value *db_get_kw_list(struct kws_request *request)
     jxv_free(kw_set);
 
     return kw_list;
-}
-
-char *get_sql_with_n_params(const char *sql_in, int n)
-{
-    int count;
-
-    char *sql_out, *p_str, *ptr;
-
-    if (n < 1)
-        return NULL;
-
-    p_str = ptr = alloca(n * 2);
-
-    do {
-        *(ptr++) = '?';
-        *(ptr++) = (n > 1) ? ',' : '\0';
-    } while (--n > 0);
-
-    count = snprintf(NULL, 0, sql_in, p_str);
-
-    sql_out = malloc(count + 1);
-
-    if (sql_out == NULL)
-        return NULL;
-
-    sprintf(sql_out, sql_in, p_str);
-
-    return sql_out;
 }
 
 bool db_kw_search(struct kws_response *response, struct kws_request *request)
