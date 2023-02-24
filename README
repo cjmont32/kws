@@ -1,9 +1,9 @@
-Project:        Keyword Search Web Programming Test
+Project:        Keyword Search Web App Programming Test
 Developer:      Cory Montgomery
 Dates:          02/22/2023 - 02/23/2023
 Languages:      C, SQL, JavaScript
 Frameworks:     Custom
-Dependences:    make, gcc, libc, sqlite3
+Dependences:    make, fakeroot, gcc, libc, sqlite3, node (optional), npx (optional)
 Hosting:        Node, Apache, other
 
 Overview
@@ -63,7 +63,7 @@ SIMPLE INSTALL AND RUN INSTRUCTIONS
 
 If you have node, npx, gcc, make, and sqlite3 installed
 you should just be able to run the build_and_run.sh
-on the command line on a *nix system (tested on Linux).
+command on any *nix system (tested on Linux/macOS).
 You should then be able to connect to the app by
 visiting http://localhost:8080
 
@@ -105,7 +105,7 @@ to files will be specific to your system).
     ErrorLog        "/var/log/httpd/kws/error_log"
     CustomLog       "/var/log/httpd/kws/access_log" common
 
-    <Directory "/srv/http/kws>
+    <Directory "/srv/http/kws">
         AllowOverride   None
         Options         ExecCGI
 

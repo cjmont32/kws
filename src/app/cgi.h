@@ -45,7 +45,7 @@ void cgi_begin_http_headers();
 
 void cgi_end_http_headers();
 
-bool cgi_set_cookie(const char *name, const char *value, const char *domain, uint64_t max_age, bool secure);
+bool cgi_set_cookie(const char *name, const char *value, const char *domain, unsigned long max_age, bool secure);
 
 bool cgi_get_cookie(char *dst, size_t size, const char *name);
 

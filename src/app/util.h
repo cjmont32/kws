@@ -14,5 +14,3 @@
 bool util_lookup_value_in_kv_string(const char *ptr, char *dst, size_t size, const char *key, const char *delim);
 
 void util_decode_uri_component(char *dst, size_t size, char *src);
-
-bool util_gen_uid(char *buf);

@@ -162,7 +162,7 @@ int db_get_keyword_like_matches(const char *kw)
 {
     char *param;
 
-    param = alloca(sizeof(kw) + 3);
+    param = alloca(strlen(kw) + 3);
 
     sprintf(param, "%%%s%%", kw);
 

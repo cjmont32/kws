@@ -244,7 +244,7 @@ const char *cgi_get_cookie_domain()
     return top;
 }
 
-bool cgi_set_cookie(const char *name, const char *value, const char *domain, uint64_t max_age, bool secure)
+bool cgi_set_cookie(const char *name, const char *value, const char *domain, unsigned long max_age, bool secure)
 {
     if (name == NULL || value == NULL)
         return false;

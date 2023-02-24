@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 export KWS_MAKE_RELEASE_BUILD=1
 
