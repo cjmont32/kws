@@ -49,6 +49,41 @@ bool cgi_is_prod()
     return false;
 }
 
+const char *cgi_server()
+{
+    const char *server_info = getenv("SERVER_SOFTWARE");
+
+    if (server_info == NULL)
+        return "unknown";
+
+    if (strstr(server_info, "Apache") != NULL)
+        return "apache";
+    else if (strstr(server_info, "Node") != NULL)
+        return "node";
+    else
+        return "unknown";
+}
+
+bool cgi_server_is_apache()
+{
+    const char *server_info = getenv("SERVER_SOFTWARE");
+
+    if (server_info == NULL)
+        return false;
+
+    return strstr(server_info, "Apache") != NULL;
+}
+
+bool cgi_server_is_node()
+{
+    const char *server_info = getenv("SERVER_SOFTWARE");
+
+    if (server_info == NULL)
+        return false;
+
+    return strstr(server_info, "Node") != NULL;
+}
+
 bool cgi_open_stream()
 {
     if (content_ptr != NULL) {

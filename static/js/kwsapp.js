@@ -33,7 +33,7 @@ kwsContext = {
             callback();
         });
 
-        r.open("POST", "/search.cgi", true);
+        r.open("POST", getSearchURL(), true);
 
         r.send(JSON.stringify(kwsContext.data));
     },
@@ -105,6 +105,16 @@ function addAppEventHandlers()
         });
     });
 
+}
+
+function getSearchURL()
+{
+    return shouldUseExtensions() ? "/search.cgi" : "/search";
+}
+
+function shouldUseExtensions()
+{
+    return document.getElementById('should_use_extensions').value == 1;
 }
 
 addEventListener("DOMContentLoaded", addAppEventHandlers);

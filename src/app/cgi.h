@@ -21,6 +21,12 @@ bool cgi_is_prod();
 
 bool cgi_is_debug();
 
+const char *cgi_server();
+
+bool cgi_server_is_apache();
+
+bool cgi_server_is_node();
+
 bool cgi_open_stream();
 
 bool cgi_get_content_size(size_t *size);

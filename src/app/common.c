@@ -23,8 +23,15 @@ void cgi_begin()
     html_open_tag_attr("charset", "utf-8");
     html_open_tag_end();
 
-    html_include_js("/static/js/kwsapp.js");
-    html_include_stylesheet("/static/css/main.css");
+    if (cgi_server_is_node()) {
+        html_include_js("/js/kwsapp.js");
+        html_include_stylesheet("/css/main.css");
+
+    }
+    else {
+        html_include_js("/static/js/kwsapp.js");
+        html_include_stylesheet("/static/css/main.css");
+    }
 
     html_open_tag("title");
     html_printf("KWS App");

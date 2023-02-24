@@ -4,6 +4,7 @@
 
 void cgi_main()
 {
+    html_printf("<input id=\"should_use_extensions\" type=\"hidden\" value=\"%d\" />", !cgi_server_is_node());
     html_printf("<div class=\"container\">");
     html_printf("<h2>Keyword Search Web App Submission</h2>");
     html_printf("<h3>Created by Cory Montgomery</h3>");
