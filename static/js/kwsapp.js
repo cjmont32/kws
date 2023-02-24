@@ -5,15 +5,25 @@ kwsContext = {
             type: 0,
             search: "",
             page: 1,
-            page_size: 10
+            page_size: 1000
         }
     },
+    response: "",
+    responseObj: {},
     model: [],
     fetch: (callback) => {
         let r = new XMLHttpRequest();
 
         r.addEventListener("load", () => {
-            kwsContext.r = r.responseText;
+            kwsContext.response = r.responseText;
+
+            kwsContext.responseObj = JSON.parse(kwsContext.response);
+
+            if (kwsContext.responseObj.error) {
+                return;
+            }
+
+            kwsContext.model = kwsContext.responseObj.result;
 
             callback();
         });
@@ -23,11 +33,51 @@ kwsContext = {
         r.send(JSON.stringify(kwsContext.data));
     },
     update: () => {
-        let c = document.getElementById('results');
+        let r = document.getElementById('results');
 
-        c.innerHTML = kwsContext.r;
+        while (r.hasChildNodes()) {
+            r.firstChild.remove();
+        }
+
+        addQuestions(r);
     }
 };
+
+function addQuestions(node)
+{
+    for (let i = 0; i < kwsContext.model.length; i++) {
+        node.appendChild(createQuestionDOMObj(kwsContext.model[i]));
+    }
+}
+
+function createQuestionDOMObj(item)
+{
+    let qNode, alNode, aNode;
+
+    qNode = document.createElement("div");
+
+    qNode.setAttribute("class", "question");
+
+    qNode.appendChild(document.createTextNode(item.question));
+
+    alNode = document.createElement("div");
+
+    alNode.setAttribute("class", "answer_list");
+
+    for (let i = 0; i < item.answers.length; i++) {
+        aNode = document.createElement("div");
+
+        aNode.setAttribute("class", "answer");
+
+        aNode.appendChild(document.createTextNode(item.answers[i]));
+
+        alNode.appendChild(aNode);
+    }
+
+    qNode.appendChild(alNode);
+
+    return qNode;
+}
 
 function addExecuteAfterInputDelayHandler(element, f)
 {

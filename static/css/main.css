@@ -9,3 +9,22 @@
 #kws {
     width: 95%;
 }
+
+#results {
+    margin: 10px;
+}
+
+.question {
+    background-color: #555555;
+    color: white;
+    margin: 5px;
+    padding: 10px;
+}
+
+.answer {
+    background-color: #aaaaaa;
+    color: #555555;
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}

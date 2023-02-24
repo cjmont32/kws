@@ -113,6 +113,8 @@ void cgi_main()
 
         if (response.result != NULL)
             jxd_put(r, "result", response.result);
+        else
+            jxd_put(r, "result", jxa_new(0));
 
         output_json(r);
 
