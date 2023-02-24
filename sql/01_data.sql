@@ -50,7 +50,8 @@ INSERT INTO answers (qid, answer) VALUES
 
 INSERT INTO keywords (qid, keyword) VALUES
     ((SELECT max(qid) FROM questions), 'temperature'),
-    ((SELECT max(qid) FROM questions), 'thermal equilibrium');
+    ((SELECT max(qid) FROM questions), 'thermal'),
+    ((SELECT max(qid) FROM questions), 'equilibrium');
 
 
 /* ----- new question ----- */

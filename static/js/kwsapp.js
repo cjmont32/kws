@@ -15,6 +15,9 @@ kwsContext = {
         let r = new XMLHttpRequest();
 
         r.addEventListener("load", () => {
+            if (!r.responseText)
+                return;
+
             kwsContext.response = r.responseText;
 
             kwsContext.responseObj = JSON.parse(kwsContext.response);
@@ -23,7 +26,9 @@ kwsContext = {
                 return;
             }
 
-            kwsContext.model = kwsContext.responseObj.result;
+            if (kwsContext.responseObj.result) {
+                kwsContext.model = kwsContext.responseObj.result;
+            }
 
             callback();
         });
@@ -101,7 +106,5 @@ function addAppEventHandlers()
     });
 
 }
-
-addEventListener("load", () => {  });
 
 addEventListener("DOMContentLoaded", addAppEventHandlers);

@@ -223,6 +223,9 @@ bool db_kw_search(struct kws_response *response, struct kws_request *request)
     limit = request->page_size;
     offset = limit * (request->page - 1);
 
+    if (request->query == NULL || strlen(request->query) == 0)
+        return false;
+
     kw_list = db_get_kw_list(request);
 
     if (kw_list == NULL) {
