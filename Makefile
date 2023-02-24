@@ -11,10 +11,9 @@ PKG_NAME=kws_app
 
 HDR_LIST=src/app/cgi.h src/app/html.h src/app/util.h src/app/db.h
 
-OBJ_LIST_0=$(JXUTIL_PATH)/rel/jxutil.a
 OBJ_LIST_1=$(OBJ_PATH)/util.o $(OBJ_PATH)/html.o $(OBJ_PATH)/cgi.o
 OBJ_LIST_2=$(OBJ_PATH)/db.o $(OBJ_PATH)/main.o
-OBJ_LIST_3=$(OBJ_LIST_0) $(OBJ_LIST_1) $(OBJ_LIST_2)
+OBJ_LIST_3=$(OBJ_LIST_1) $(OBJ_LIST_2) $(JXUTIL_PATH)/rel/jxutil.a
 OBJ_LIST_4=$(OBJ_LIST_3) $(OBJ_PATH)/common.o
 
 CGI_LIST=$(CGI_PATH)/index.cgi $(CGI_PATH)/search.cgi

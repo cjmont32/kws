@@ -2,6 +2,7 @@ kwsContext = {
     data: {
         method: "search",
         params: {
+            type: 0,
             search: "",
             page: 1,
             page_size: 10

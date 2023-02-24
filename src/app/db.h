@@ -7,22 +7,31 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-struct jx_value;
-typedef struct jx_value jx_value;
+struct jx_value_t;
+typedef struct jx_value_t jx_value;
+
+enum kw_search_type
+{
+    KW_SEARCH_TYPE_EXACT,
+    KW_SEARCH_TYPE_LIKE
+};
 
 struct kws_request
 {
     const char *query;
+    enum kw_search_type type;
     int page, page_size;
 };
 
-struct kws_result
+struct kws_response
 {
     jx_value *result;
     int page, page_size;
+    int matches;
+    bool error;
 };
 
-bool db_kw_search(struct kws_result *result, struct kws_request *request);
+bool db_kw_search(struct kws_response *response, struct kws_request *request);
 
 void db_set_path(const char *fmt, ...);
 

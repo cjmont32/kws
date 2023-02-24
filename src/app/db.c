@@ -10,6 +10,8 @@
 
 #include "db.h"
 
+#include <jx_value.h>
+
 #define DB_PATH_SIZE            1024
 #define DB_ERROR_MSG_SIZE       1024
 
@@ -29,8 +31,8 @@ enum db_status
 
 enum db_action
 {
-    DB_ACTION_GET_KEYWORDS_EXACT_MATCH,
-    DB_ACTION_GET_KEYWORDS_LIKE_MATCH,
+    DB_ACTION_GET_KW_CNT_EXACT_MATCH,
+    DB_ACTION_GET_KW_CNT_LIKE_MATCH,
     DB_ACTION_GUARD
 };
 
@@ -41,8 +43,22 @@ struct db_stmt {
 db_stmt_cache[] =
 {
     { NULL, "SELECT COUNT(*) AS CNT FROM keywords WHERE keyword = ?;" },
-    { NULL, "SELECT COUNT(*) AS CNT FROM keywords WHERE like('%?%', keyword);" }
+    { NULL, "SELECT COUNT(*) AS CNT FROM keywords WHERE keyword LIKE ?;" }
 };
+
+const char *get_answers_sql =
+    "SELECT v.qid, v.question, v.rank, at.answer FROM                   "
+    "(                                                                  "
+    "   SELECT qt.qid, qt.question, COUNT(*) AS rank FROM               "
+    "   (                                                               "
+    "       SELECT qid, keyword FROM keywords WHERE keyword IN (%s)     "
+    "   ) AS kt                                                         "
+    "   INNER JOIN questions AS qt ON (kt.qid = qt.qid)                 "
+    "   GROUP BY qt.qid, qt.question                                    "
+    ") AS v                                                             "
+    "INNER JOIN answers AS at ON (v.qid = at.qid)                       "
+    "ORDER BY rank DESC                                                 "
+    "LIMIT ? OFFSET ?;                                                  ";
 
 void db_set_error_msg(const char *fmt, ...);
 enum db_status db_exec_sql(const char *sql);
@@ -58,6 +74,233 @@ bool db_bind_int_foreign_key(sqlite3_stmt *stmt, int index, int value);
 int db_step(sqlite3_stmt *stmt);
 bool db_reset(sqlite3_stmt *stmt);
 bool db_finalize(sqlite3_stmt *stmt);
+
+int db_get_keyword_count(enum db_action act, const char *param)
+{
+    int r;
+    sqlite3_stmt *stmt;
+
+    stmt = db_get_stmt(act);
+
+    if (stmt == NULL)
+        return -1;
+
+    if (!db_bind_text(stmt, 1, param)) {
+        db_reset(stmt);
+        return -1;
+    }
+
+    db_rc = db_step(stmt);
+
+    if (db_get_error()) {
+        db_reset(stmt);
+        return -1;
+    }
+
+    r = sqlite3_column_int(stmt, 0);
+
+    db_reset(stmt);
+
+    return r;
+}
+
+int db_get_keyword_exact_matches(const char* kw)
+{
+    return db_get_keyword_count(DB_ACTION_GET_KW_CNT_EXACT_MATCH, kw);
+}
+
+int db_get_keyword_like_matches(const char *kw)
+{
+    char *param;
+
+    param = alloca(sizeof(kw) + 3);
+
+    sprintf(param, "%%%s%%", kw);
+
+    return db_get_keyword_count(DB_ACTION_GET_KW_CNT_LIKE_MATCH, param);
+}
+
+jx_value *db_get_kw_list(struct kws_request *request)
+{
+    int count;
+    jx_value *kw_set, *kw_list;
+    char *query, *kw;
+
+    kw_set = jxd_new();
+    kw_list = jxa_new(10);
+
+    query = alloca(strlen(request->query) + 1);
+
+    strcpy(query, request->query);
+
+    kw = strtok(query, " ");
+
+    do {
+        if (jxd_has_key(kw_set, kw))
+            continue;
+
+        if (request->type == KW_SEARCH_TYPE_EXACT)
+            count = db_get_keyword_exact_matches(kw);
+        else
+            count = db_get_keyword_like_matches(kw);
+
+        if (count <= 0)
+            continue;
+
+        jxd_put_bool(kw_set, kw, true);
+        jxa_push(kw_list, jxs_new(kw));
+    } while ((kw = strtok(NULL, " ")) != NULL);
+
+    jxv_free(kw_set);
+
+    return kw_list;
+}
+
+char *get_sql_with_n_params(const char *sql_in, int n)
+{
+    int count;
+
+    char *sql_out, *p_str, *ptr;
+
+    if (n < 1)
+        return NULL;
+
+    p_str = ptr = alloca(n * 2);
+
+    do {
+        *(ptr++) = '?';
+        *(ptr++) = (n > 1) ? ',' : '\0';
+    } while (--n > 0);
+
+    count = snprintf(NULL, 0, sql_in, p_str);
+
+    sql_out = malloc(count + 1);
+
+    if (sql_out == NULL)
+        return NULL;
+
+    sprintf(sql_out, sql_in, p_str);
+
+    return sql_out;
+}
+
+bool db_kw_search(struct kws_response *response, struct kws_request *request)
+{
+    int matches, i, p, limit, offset, rc, qid, last_qid, rank;
+
+    char *question, *answer;
+
+    sqlite3_stmt *stmt;
+    char *sql;
+
+    jx_value *kw_list, *qt_list, *qt_object, *a_list;
+
+    limit = request->page_size;
+    offset = limit * (request->page - 1);
+
+    kw_list = db_get_kw_list(request);
+
+    if (kw_list == NULL) {
+        return false;
+    }
+
+    matches = jxa_get_length(kw_list);
+
+    if (matches == 0) {
+        response->matches = 0;
+        jxv_free(kw_list);
+        return true;
+    }
+
+    sql = get_sql_with_n_params(get_answers_sql, matches);
+
+    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+
+    if (db_get_error()) {
+        db_set_error_msg("prepare: [%s]", sqlite3_errstr(db_rc));
+
+        jxv_free(kw_list);
+        free(sql);
+
+        return false;
+    }
+
+    for (i = 0, p = 1; i < matches; i++, p++) {
+        char *keyword = jxs_get_str(jxa_get(kw_list, i));
+
+        if (!db_bind_text(stmt, p, keyword)) {
+            db_set_error_msg("query: [%s] bind: [%s] error: [%s]", sql, keyword, sqlite3_errstr(db_rc));
+
+            db_finalize(stmt);
+            jxv_free(kw_list);
+            free(sql);
+
+            return false;
+        }
+    }
+
+    if (!db_bind_int(stmt, p++, limit)) {
+        db_set_error_msg("query: [%s] bind: [%d] error: [%s]", sql, limit, sqlite3_errstr(db_rc));
+
+        db_finalize(stmt);
+        jxv_free(kw_list);
+        free(sql);
+
+        return false;
+    }
+
+    if (!db_bind_int(stmt, p++, offset)) {
+        db_set_error_msg("query: [%s] bind: [%d] error: [%s]", sql, offset, sqlite3_errstr(db_rc));
+
+        db_finalize(stmt);
+        jxv_free(kw_list);
+        free(sql);
+
+        return false;
+    }
+
+    qt_list = jxa_new(10);
+    qt_object = NULL;
+    last_qid = -1;
+
+    while ((rc = db_step(stmt)) != SQLITE_DONE) {
+        if (rc != SQLITE_ROW) {
+            return false;
+        }
+
+        qid = sqlite3_column_int(stmt, 0);
+        question = (char *)sqlite3_column_text(stmt, 1);
+        rank = sqlite3_column_int(stmt, 2);
+        answer = (char *)sqlite3_column_text(stmt, 3);
+
+        if (last_qid != qid) {
+            qt_object = jxd_new();
+
+            jxd_put_string(qt_object, "question", question);
+            jxd_put_number(qt_object, "rank", rank);
+            jxd_put(qt_object, "answers", jxa_new(10));
+
+            jxa_push(qt_list, qt_object);
+
+            last_qid = qid;
+        }
+
+        a_list = jxd_get(qt_object, "answers");
+
+        jxa_push(a_list, jxs_new(answer));
+    }
+
+    db_finalize(stmt);
+
+    response->result = qt_list;
+    response->matches = matches;
+
+    jxv_free(kw_list);
+
+    free(sql);
+
+    return true;
+}
 
 void db_set_error_msg(const char *fmt, ...)
 {
@@ -281,7 +524,7 @@ bool db_bind_null(sqlite3_stmt *stmt, int index)
 
 bool db_bind_text(sqlite3_stmt *stmt, int index, const char *str)
 {
-    db_rc = sqlite3_bind_text(stmt, index, str, -1, SQLITE_STATIC);
+    db_rc = sqlite3_bind_text(stmt, index, str, -1, NULL);
 
     if (db_get_error()) {
         db_set_error_msg("bind: %s", sqlite3_errstr(db_rc));

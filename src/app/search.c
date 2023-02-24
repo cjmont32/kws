@@ -1,5 +1,6 @@
 #include "cgi.h"
 #include "util.h"
+#include "db.h"
 
 #include <jx_util.h>
 
@@ -75,8 +76,14 @@ void cgi_begin()
 
 void cgi_main()
 {
+    struct kws_request request;
+    struct kws_response response;
+
     jx_cntx *cntx;
     jx_value *obj, *params;
+
+    bzero(&request, sizeof(request));
+    bzero(&response, sizeof(response));
 
     cntx = jx_new();
 
@@ -94,7 +101,32 @@ void cgi_main()
 
     params = jxd_get(obj, "params");
 
-    output_json(params);
+    request.type = (int)jxd_get_number(params, "type", NULL);
+    request.query = jxd_get_string(params, "search", NULL);
+    request.page = (int)jxd_get_number(params, "page", NULL);
+    request.page_size = (int)jxd_get_number(params, "page_size", NULL);
+
+    if (db_kw_search(&response, &request)) {
+        jx_value *r = jxd_new();
+
+        jxd_put_number(r, "matches", response.matches);
+
+        if (response.result != NULL)
+            jxd_put(r, "result", response.result);
+
+        output_json(r);
+
+        jxv_free(r);
+    }
+    else {
+        jx_value *r = jxd_new();
+
+        jxd_put_string(r, "error", (char *)db_get_error_msg());
+
+        output_json(r);
+
+        jxv_free(r);
+    }
 
     jxv_free(obj);
 

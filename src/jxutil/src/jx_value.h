@@ -116,7 +116,7 @@ bool jxd_put(jx_value *dict, char *key, jx_value *value);
 jx_value *jxd_get(jx_value *dict, char *key);
 jx_value *jxd_del(jx_value *dict, char *key);
 bool jxd_del_free(jx_value *dict, char *key);
-bool jxd_has(jx_value *dict, char *key);
+bool jxd_has_key(jx_value *dict, char *key);
 jx_type jxd_get_type(jx_value *dict, char *key, bool *found);
 bool jxd_put_number(jx_value *dict, char *key, double num);
 double jxd_get_number(jx_value *dict, char *key, bool *found);
