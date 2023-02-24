@@ -1,0 +1,120 @@
+Project:        Keyword Search Web Programming Test
+Developer:      Cory Montgomery
+Dates:          02/22/2023 - 02/23/2023
+Languages:      C, SQL, JavaScript
+Frameworks:     Custom
+Dependences:    make, gcc, libc, sqlite3
+Hosting:        Node, Apache, other
+
+Overview
+=========
+
+The backend is implemented in C and uses some generic
+components that I've written for other projects.
+
+My decision to use this design was based on the
+following:
+
+- For performance (AJAX requests take 10ms or less
+  over localhost)
+
+- To demonstrate programming knowledge
+
+- I've used several other languages/frameworks in the
+  past, but this was the fastest and surest way for
+  me based on the types of projects I've worked on
+  recently
+
+The following files contain the most application-specific
+code:
+
+src/app/search.c
+src/app/db.c
+static/js/kwsapp.js
+sql/00_schema.sql
+sql/01_data.sql
+
+There are three database tables, namely the questions,
+answers, and keywords tables.
+
+The user should be able to type any text into the search
+field as long as their input contains whole keywords.
+
+The keywords table is intended to improve the efficiency
+of searches (an index is created on it).
+
+The get_answers_sql query in db.c is intended to
+minimize the number of rows returned from the keywords
+table (the left table in the query) before joining it
+on the questions table.
+
+There are some partially implemented features, e.g.
+pagination, and search options. This could be built
+out with a little more work.
+
+Note that there are some unlikely error conditions that
+I don't check for. I would add more protections for a
+production application. I've left these the way they
+are for the sake of expediency.
+
+
+SIMPLE INSTALL AND RUN INSTRUCTIONS
+====================================
+
+If you have node, npx, gcc, make, and sqlite3 installed
+you should just be able to run the build_and_run.sh
+on the command line on a *nix system (tested on Linux).
+You should then be able to connect to the app by
+visiting http://localhost:8080
+
+There are some example questions on the main page
+
+APACHE INSTRUCTIONS
+===================
+
+Edit the main Makefile at the top of the project
+directory and set the INSTALL_PATH to the desired
+location, then run the following commands:
+
+export KWS_MAKE_RELEASE_BUILD=1
+
+make clean
+make all && sudo make install
+
+Then make the database:
+
+make db
+
+Copy bin/db/kws.db to the appropriate place
+on your system (e.g. somewhere in /var/lib on Linux).
+
+Make sure the database is owned by the user and
+group that Apache is configured to setuid() and
+setgid() to before serving content, e.g.:
+
+sudo chown http:http <path_to_db>
+
+The following configures a virtual host with
+the required Apache directives (note the paths
+to files will be specific to your system).
+
+<VirtualHost *:80>
+    DocumentRoot    "/srv/http/kws"
+    ServerName      localhost
+    ServerAlias     kws.app.local
+    ErrorLog        "/var/log/httpd/kws/error_log"
+    CustomLog       "/var/log/httpd/kws/access_log" common
+
+    <Directory "/srv/http/kws>
+        AllowOverride   None
+        Options         ExecCGI
+
+        AddHandler cgi-script .cgi
+
+        DirectoryIndex  index.cgi
+
+        SetEnv KWS_DB_PATH /var/lib/kws/kws.db
+
+        Require all granted
+    </Directory>
+</VirtualHost>
