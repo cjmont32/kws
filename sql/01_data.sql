@@ -41,6 +41,18 @@ INSERT INTO keywords (qid, keyword) VALUES
 /* ----- new question ----- */
 
 
+INSERT INTO questions (question) VALUES ('What is the mass of a proton?');
+
+INSERT INTO answers (qid, answer) VALUES
+    ((SELECT max(qid) FROM questions), '1.67262192E-27 kg');
+
+INSERT INTO keywords (qid, keyword) VALUES
+    ((SELECT max(qid) FROM questions), 'mass'),
+    ((SELECT max(qid) FROM questions), 'proton');
+
+/* ----- new question ----- */
+
+
 INSERT INTO questions (question) VALUES ('What happens within an isolated container enclosing a gas with an uneven temperature distribution?');
 
 
@@ -49,6 +61,7 @@ INSERT INTO answers (qid, answer) VALUES
     ((SELECT max(qid) FROM questions), 'The average velocity of each molecule becomes closer together as the molecules tranfer kinetic energy to each other.');
 
 INSERT INTO keywords (qid, keyword) VALUES
+    ((SELECT max(qid) FROM questions), 'gas'),
     ((SELECT max(qid) FROM questions), 'temperature'),
     ((SELECT max(qid) FROM questions), 'thermal'),
     ((SELECT max(qid) FROM questions), 'equilibrium');
@@ -61,11 +74,14 @@ INSERT INTO questions (question) VALUES ('How fast is plaid speed?');
 
 INSERT INTO answers (qid, answer) VALUES (
     (SELECT max(qid) FROM questions),
-'A arbitrarily high magnitude of velocity that, in accordance with Einstein''s general theory of relativity,
+'An arbitrarily high magnitude of velocity that, in accordance with Einstein''s general theory of relativity,
 must be upper bound by the speed that light travels through a vacuum (299,792,458 m/s).');
 
 INSERT INTO keywords (qid, keyword) VALUES
     ((SELECT max(qid) FROM questions), 'speed'),
+    ((SELECT max(qid) FROM questions), 'fast'),
+    ((SELECT max(qid) FROM questions), 'velocity'),
+    ((SELECT max(qid) FROM questions), 'relativity'),
     ((SELECT max(qid) FROM questions), 'vacuum'),
     ((SELECT max(qid) FROM questions), 'light'),
     ((SELECT max(qid) FROM questions), 'plaid');
