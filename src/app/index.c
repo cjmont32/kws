@@ -15,7 +15,13 @@ void cgi_main()
     html_printf("<div>%s</div>", "What is the mass of an electron?");
     html_printf("<div>%s</div>", "How fast is plaid speed?");
     html_printf("<br/>");
+    html_printf("<br/>");
     html_printf("<input type=\"text\" id=\"kws\" name=\"kws\" placeholder=\"enter search query\" />");
     html_printf("<div id=\"results\"></div>");
+    html_printf("<br/>");
+
+    html_printf(
+        "Note: Results are ranked by how many keywords matched. The 1st result should be the best available match.");
+
     html_printf("</div>");
 }
